@@ -1,6 +1,10 @@
 package com.econceptions.socialapp.service;
 
-import com.econceptions.socialapp.dto.PostDTO;
+import com.econceptions.socialapp.dto.PostCreateRequestDTO;
+import com.econceptions.socialapp.dto.PostResponseDTO;
+import com.econceptions.socialapp.dto.PostUpdateRequestDTO;
+import com.econceptions.socialapp.dto.CommentRequestDTO;
+import com.econceptions.socialapp.dto.PostSearchRequestDTO;
 import com.econceptions.socialapp.entity.Comment;
 import com.econceptions.socialapp.entity.Post;
 import com.econceptions.socialapp.entity.User;
@@ -26,34 +30,34 @@ public class PostService {
         this.commentRepository = commentRepository;
     }
 
-    public PostDTO createPost(PostDTO postDTO) {
+    public PostResponseDTO createPost(PostCreateRequestDTO requestDTO) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        
+
         Post post = new Post();
         post.setUser(user);
-        post.setContent(postDTO.getContent());
+        post.setContent(requestDTO.getContent());
         post = postRepository.save(post);
-        return mapToDTO(post);
+        return mapToResponseDTO(post);
     }
 
-    public Page<PostDTO> getAllPosts(Pageable pageable) {
-        return postRepository.findAll(pageable).map(this::mapToDTO);
+    public Page<PostResponseDTO> getAllPosts(Pageable pageable) {
+        return postRepository.findAll(pageable).map(this::mapToResponseDTO);
     }
 
-    public PostDTO getPost(Long id) {
+    public PostResponseDTO getPost(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
-        return mapToDTO(post);
+        return mapToResponseDTO(post);
     }
 
-    public PostDTO updatePost(Long id, PostDTO postDTO) {
+    public PostResponseDTO updatePost(Long id, PostUpdateRequestDTO requestDTO) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
-        post.setContent(postDTO.getContent());
+        post.setContent(requestDTO.getContent());
         post = postRepository.save(post);
-        return mapToDTO(post);
+        return mapToResponseDTO(post);
     }
 
     public void deletePost(Long id) {
@@ -62,7 +66,7 @@ public class PostService {
         postRepository.delete(post);
     }
 
-    public PostDTO addComment(Long id, String content) {
+    public PostResponseDTO addComment(Long id, CommentRequestDTO requestDTO) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -72,13 +76,13 @@ public class PostService {
         Comment comment = new Comment();
         comment.setPost(post);
         comment.setUser(user);
-        comment.setContent(content);
+        comment.setContent(requestDTO.getContent());
         commentRepository.save(comment);
 
-        return mapToDTO(post);
+        return mapToResponseDTO(post);
     }
 
-    public PostDTO likePost(Long id) {
+    public PostResponseDTO likePost(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -90,12 +94,12 @@ public class PostService {
             post = postRepository.save(post);
         }
 
-        return mapToDTO(post);
+        return mapToResponseDTO(post);
     }
 
-    public Page<PostDTO> searchPosts(String keyword, Pageable pageable) {
-        return postRepository.findByContentContaining(keyword, pageable)
-                .map(this::mapToDTO);
+    public Page<PostResponseDTO> searchPosts(PostSearchRequestDTO requestDTO, Pageable pageable) {
+        return postRepository.findByContentContaining(requestDTO.getKeyword(), pageable)
+                .map(this::mapToResponseDTO);
     }
 
     public boolean isPostOwner(Long postId, String username) {
@@ -104,8 +108,8 @@ public class PostService {
         return post.getUser().getUsername().equals(username);
     }
 
-    private PostDTO mapToDTO(Post post) {
-        PostDTO dto = new PostDTO();
+    private PostResponseDTO mapToResponseDTO(Post post) {
+        PostResponseDTO dto = new PostResponseDTO();
         dto.setId(post.getId());
         dto.setUserId(post.getUser().getId());
         dto.setContent(post.getContent());

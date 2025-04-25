@@ -1,6 +1,10 @@
 package com.econceptions.socialapp.controller;
 
-import com.econceptions.socialapp.dto.PostDTO;
+import com.econceptions.socialapp.dto.PostCreateRequestDTO;
+import com.econceptions.socialapp.dto.PostResponseDTO;
+import com.econceptions.socialapp.dto.PostUpdateRequestDTO;
+import com.econceptions.socialapp.dto.CommentRequestDTO;
+import com.econceptions.socialapp.dto.PostSearchRequestDTO;
 import com.econceptions.socialapp.service.PostService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,13 +30,13 @@ public class PostController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Create a new post")
-    public ResponseEntity<PostDTO> createPost(@Valid @RequestBody PostDTO postDTO) {
-        return ResponseEntity.ok(postService.createPost(postDTO));
+    public ResponseEntity<PostResponseDTO> createPost(@Valid @RequestBody PostCreateRequestDTO requestDTO) {
+        return ResponseEntity.ok(postService.createPost(requestDTO));
     }
 
     @GetMapping
     @Operation(summary = "Get all posts with pagination and sorting")
-    public ResponseEntity<Page<PostDTO>> getAllPosts(
+    public ResponseEntity<Page<PostResponseDTO>> getAllPosts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "timestamp") String sortBy,
@@ -43,15 +47,15 @@ public class PostController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get post by ID")
-    public ResponseEntity<PostDTO> getPost(@PathVariable Long id) {
+    public ResponseEntity<PostResponseDTO> getPost(@PathVariable Long id) {
         return ResponseEntity.ok(postService.getPost(id));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("isAuthenticated() and @postService.isPostOwner(#id, authentication.name)")
     @Operation(summary = "Update a post")
-    public ResponseEntity<PostDTO> updatePost(@PathVariable Long id, @Valid @RequestBody PostDTO postDTO) {
-        return ResponseEntity.ok(postService.updatePost(id, postDTO));
+    public ResponseEntity<PostResponseDTO> updatePost(@PathVariable Long id, @Valid @RequestBody PostUpdateRequestDTO requestDTO) {
+        return ResponseEntity.ok(postService.updatePost(id, requestDTO));
     }
 
     @DeleteMapping("/{id}")
@@ -65,22 +69,22 @@ public class PostController {
     @PostMapping("/{id}/comments")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Add comment to a post")
-    public ResponseEntity<PostDTO> addComment(@PathVariable Long id, @RequestBody String content) {
-        return ResponseEntity.ok(postService.addComment(id, content));
+    public ResponseEntity<PostResponseDTO> addComment(@PathVariable Long id, @Valid @RequestBody CommentRequestDTO requestDTO) {
+        return ResponseEntity.ok(postService.addComment(id, requestDTO));
     }
 
     @PostMapping("/{id}/like")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Like a post")
-    public ResponseEntity<PostDTO> likePost(@PathVariable Long id) {
+    public ResponseEntity<PostResponseDTO> likePost(@PathVariable Long id) {
         return ResponseEntity.ok(postService.likePost(id));
     }
 
     @PostMapping("/search")
     @Operation(summary = "Search posts by keyword")
-    public ResponseEntity<Page<PostDTO>> searchPosts(@RequestBody String keyword,
-                                                    @RequestParam(defaultValue = "0") int page,
-                                                    @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(postService.searchPosts(keyword, PageRequest.of(page, size)));
+    public ResponseEntity<Page<PostResponseDTO>> searchPosts(@Valid @RequestBody PostSearchRequestDTO requestDTO,
+                                                             @RequestParam(defaultValue = "0") int page,
+                                                             @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(postService.searchPosts(requestDTO, PageRequest.of(page, size)));
     }
 }

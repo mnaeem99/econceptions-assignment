@@ -1,6 +1,9 @@
 package com.econceptions.socialapp.controller;
 
-import com.econceptions.socialapp.dto.UserDTO;
+import com.econceptions.socialapp.dto.UserRegisterRequestDTO;
+import com.econceptions.socialapp.dto.UserResponseDTO;
+import com.econceptions.socialapp.dto.UserLoginRequestDTO;
+import com.econceptions.socialapp.dto.UserSearchRequestDTO;
 import com.econceptions.socialapp.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,19 +27,19 @@ public class UserController {
 
     @PostMapping("/register")
     @Operation(summary = "Register a new user")
-    public ResponseEntity<UserDTO> register(@Valid @RequestBody UserDTO userDTO) {
-        return ResponseEntity.ok(userService.register(userDTO));
+    public ResponseEntity<UserResponseDTO> register(@Valid @RequestBody UserRegisterRequestDTO requestDTO) {
+        return ResponseEntity.ok(userService.register(requestDTO));
     }
 
     @PostMapping("/login")
     @Operation(summary = "Authenticate user and return JWT")
-    public ResponseEntity<String> login(@RequestBody UserDTO userDTO) {
-        return ResponseEntity.ok(userService.login(userDTO));
+    public ResponseEntity<String> login(@Valid @RequestBody UserLoginRequestDTO requestDTO) {
+        return ResponseEntity.ok(userService.login(requestDTO));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get user profile by ID")
-    public ResponseEntity<UserDTO> getUser(@PathVariable Long id) {
+    public ResponseEntity<UserResponseDTO> getUser(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUser(id));
     }
 
@@ -50,25 +53,25 @@ public class UserController {
 
     @GetMapping("/{id}/followers")
     @Operation(summary = "Get user's followers")
-    public ResponseEntity<Page<UserDTO>> getFollowers(@PathVariable Long id,
-                                                     @RequestParam(defaultValue = "0") int page,
-                                                     @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<Page<UserResponseDTO>> getFollowers(@PathVariable Long id,
+                                                              @RequestParam(defaultValue = "0") int page,
+                                                              @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(userService.getFollowers(id, PageRequest.of(page, size)));
     }
 
     @GetMapping("/{id}/following")
     @Operation(summary = "Get users followed by a user")
-    public ResponseEntity<Page<UserDTO>> getFollowing(@PathVariable Long id,
-                                                     @RequestParam(defaultValue = "0") int page,
-                                                     @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<Page<UserResponseDTO>> getFollowing(@PathVariable Long id,
+                                                              @RequestParam(defaultValue = "0") int page,
+                                                              @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(userService.getFollowing(id, PageRequest.of(page, size)));
     }
 
     @PostMapping("/search")
     @Operation(summary = "Search users by keyword")
-    public ResponseEntity<Page<UserDTO>> searchUsers(@RequestBody String keyword,
-                                                    @RequestParam(defaultValue = "0") int page,
-                                                    @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(userService.searchUsers(keyword, PageRequest.of(page, size)));
+    public ResponseEntity<Page<UserResponseDTO>> searchUsers(@Valid @RequestBody UserSearchRequestDTO requestDTO,
+                                                             @RequestParam(defaultValue = "0") int page,
+                                                             @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(userService.searchUsers(requestDTO, PageRequest.of(page, size)));
     }
 }

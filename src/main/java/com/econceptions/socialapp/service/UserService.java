@@ -1,6 +1,9 @@
 package com.econceptions.socialapp.service;
 
-import com.econceptions.socialapp.dto.UserDTO;
+import com.econceptions.socialapp.dto.UserRegisterRequestDTO;
+import com.econceptions.socialapp.dto.UserResponseDTO;
+import com.econceptions.socialapp.dto.UserLoginRequestDTO;
+import com.econceptions.socialapp.dto.UserSearchRequestDTO;
 import com.econceptions.socialapp.entity.Follow;
 import com.econceptions.socialapp.entity.User;
 import com.econceptions.socialapp.repository.FollowRepository;
@@ -31,30 +34,30 @@ public class UserService implements UserDetailsService {
         this.jwtUtil = jwtUtil;
     }
 
-    public UserDTO register(UserDTO userDTO) {
+    public UserResponseDTO register(UserRegisterRequestDTO requestDTO) {
         User user = new User();
-        user.setUsername(userDTO.getUsername());
-        user.setEmail(userDTO.getEmail());
-        user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
-        user.setBio(userDTO.getBio());
-        user.setProfilePicture(userDTO.getProfilePicture());
+        user.setUsername(requestDTO.getUsername());
+        user.setEmail(requestDTO.getEmail());
+        user.setPassword(passwordEncoder.encode(requestDTO.getPassword()));
+        user.setBio(requestDTO.getBio());
+        user.setProfilePicture(requestDTO.getProfilePicture());
         user = userRepository.save(user);
-        return mapToDTO(user);
+        return mapToResponseDTO(user);
     }
 
-    public String login(UserDTO userDTO) {
-        User user = userRepository.findByUsername(userDTO.getUsername())
+    public String login(UserLoginRequestDTO requestDTO) {
+        User user = userRepository.findByUsername(requestDTO.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        if (passwordEncoder.matches(userDTO.getPassword(), user.getPassword())) {
+        if (passwordEncoder.matches(requestDTO.getPassword(), user.getPassword())) {
             return jwtUtil.generateToken(user.getUsername());
         }
         throw new RuntimeException("Invalid credentials");
     }
 
-    public UserDTO getUser(Long id) {
+    public UserResponseDTO getUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return mapToDTO(user);
+        return mapToResponseDTO(user);
     }
 
     public void followUser(Long id) {
@@ -78,20 +81,20 @@ public class UserService implements UserDetailsService {
         }
     }
 
-    public Page<UserDTO> getFollowers(Long id, Pageable pageable) {
+    public Page<UserResponseDTO> getFollowers(Long id, Pageable pageable) {
         return followRepository.findByFollowingId(id, pageable)
-                .map(follow -> mapToDTO(follow.getFollower()));
+                .map(follow -> mapToResponseDTO(follow.getFollower()));
     }
 
-    public Page<UserDTO> getFollowing(Long id, Pageable pageable) {
+    public Page<UserResponseDTO> getFollowing(Long id, Pageable pageable) {
         return followRepository.findByFollowerId(id, pageable)
-                .map(follow -> mapToDTO(follow.getFollowing()));
+                .map(follow -> mapToResponseDTO(follow.getFollowing()));
     }
 
-    public Page<UserDTO> searchUsers(String keyword, Pageable pageable) {
+    public Page<UserResponseDTO> searchUsers(UserSearchRequestDTO requestDTO, Pageable pageable) {
         return userRepository.findByUsernameContainingOrEmailContainingOrBioContaining(
-                        keyword, keyword, keyword, pageable)
-                .map(this::mapToDTO);
+                        requestDTO.getKeyword(), requestDTO.getKeyword(), requestDTO.getKeyword(), pageable)
+                .map(this::mapToResponseDTO);
     }
 
     @Override
@@ -105,8 +108,8 @@ public class UserService implements UserDetailsService {
                 .build();
     }
 
-    private UserDTO mapToDTO(User user) {
-        UserDTO dto = new UserDTO();
+    private UserResponseDTO mapToResponseDTO(User user) {
+        UserResponseDTO dto = new UserResponseDTO();
         dto.setId(user.getId());
         dto.setUsername(user.getUsername());
         dto.setEmail(user.getEmail());
