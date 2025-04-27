@@ -7,10 +7,13 @@ import com.econceptions.socialapp.dto.CommentRequestDTO;
 import com.econceptions.socialapp.dto.PostSearchRequestDTO;
 import com.econceptions.socialapp.entity.Comment;
 import com.econceptions.socialapp.entity.Post;
+import com.econceptions.socialapp.entity.PostLike;
 import com.econceptions.socialapp.entity.User;
 import com.econceptions.socialapp.repository.CommentRepository;
 import com.econceptions.socialapp.repository.PostRepository;
 import com.econceptions.socialapp.repository.UserRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,6 +33,7 @@ public class PostService {
         this.commentRepository = commentRepository;
     }
 
+    @CacheEvict(value = {"posts", "searchPosts"}, allEntries = true)
     public PostResponseDTO createPost(PostCreateRequestDTO requestDTO) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByUsername(username)
@@ -42,16 +46,19 @@ public class PostService {
         return mapToResponseDTO(post);
     }
 
+    @Cacheable(value = "posts", key = "'page:' + #pageable.pageNumber", unless = "#pageable.pageNumber != 0")
     public Page<PostResponseDTO> getAllPosts(Pageable pageable) {
         return postRepository.findAll(pageable).map(this::mapToResponseDTO);
     }
 
+    @Cacheable(value = "posts", key = "#id")
     public PostResponseDTO getPost(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
         return mapToResponseDTO(post);
     }
 
+    @CacheEvict(value = {"posts", "searchPosts"}, allEntries = true)
     public PostResponseDTO updatePost(Long id, PostUpdateRequestDTO requestDTO) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
@@ -60,12 +67,14 @@ public class PostService {
         return mapToResponseDTO(post);
     }
 
+    @CacheEvict(value = {"posts", "searchPosts"}, allEntries = true)
     public void deletePost(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
         postRepository.delete(post);
     }
 
+    @CacheEvict(value = {"posts", "searchPosts"}, allEntries = true)
     public PostResponseDTO addComment(Long id, CommentRequestDTO requestDTO) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
@@ -82,21 +91,27 @@ public class PostService {
         return mapToResponseDTO(post);
     }
 
+    @CacheEvict(value = {"posts", "searchPosts"}, allEntries = true)
     public PostResponseDTO likePost(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!post.getLikes().contains(user)) {
-            post.getLikes().add(user);
-            post = postRepository.save(post);
+        boolean alreadyLiked = post.getLikes().stream()
+                .anyMatch(like -> like.getUser().getId().equals(user.getId()));
+        if (!alreadyLiked) {
+            PostLike postLike = new PostLike();
+            postLike.setPost(post);
+            postLike.setUser(user);
+            post.getLikes().add(postLike);
+            postRepository.save(post);
         }
 
         return mapToResponseDTO(post);
     }
 
+    @Cacheable(value = "searchPosts", key = "'search:' + #requestDTO.keyword + ':page:' + #pageable.pageNumber", unless = "#pageable.pageNumber != 0")
     public Page<PostResponseDTO> searchPosts(PostSearchRequestDTO requestDTO, Pageable pageable) {
         return postRepository.findByContentContaining(requestDTO.getKeyword(), pageable)
                 .map(this::mapToResponseDTO);

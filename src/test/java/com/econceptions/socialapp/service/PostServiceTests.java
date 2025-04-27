@@ -73,10 +73,14 @@ class PostServiceTests {
         Post post = new Post();
         post.setId(1L);
         post.setUser(new User());
-        List<User> likes = new ArrayList<User>();
+        List<PostLike> likes = new ArrayList<PostLike>();
         User user = new User();
         user.setUsername("testUser");
-        likes.add(user);
+        user.setId(2L);
+        PostLike postLike = new PostLike();
+        postLike.setPost(post);
+        postLike.setUser(user);
+        likes.add(postLike);
         post.setLikes(likes);
         when(postRepository.findById(1L)).thenReturn(Optional.of(post));
         when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(user));

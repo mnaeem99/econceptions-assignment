@@ -49,7 +49,7 @@ class ApiIntegrationTest {
     protected String jwtToken;
 
     @BeforeAll
-    void setUp() {
+    void setUp() throws Exception {
 
         // Creating a test user
         User user = new User();
@@ -77,7 +77,21 @@ class ApiIntegrationTest {
         comment.setContent("Test Comment on Post 1");
         commentRepository.save(comment);
 
-        jwtToken = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0aW5nIiwiaWF0IjoxNzQ1NjA1ODk1LCJleHAiOjE3NDU2OTIyOTV9.uRNphjlkiG-Q62x3rIby6aS82c4Gb10eibhccxBWbmw";
+        // Create login request
+        UserLoginRequestDTO loginRequest = new UserLoginRequestDTO();
+        loginRequest.setUsername("testing");  // <- login with `testing` user
+        loginRequest.setPassword("pass123");
+
+        String response = mockMvc.perform(post("/users/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        jwtToken = "Bearer " + response;
+
     }
 
     protected RequestPostProcessor auth() {

@@ -26,11 +26,16 @@ public class Post {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
     private List<Comment> comments = new ArrayList<>();
 
-    @ManyToMany
-    @JoinTable(
-        name = "post_likes",
-        joinColumns = @JoinColumn(name = "post_id"),
-        inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    private List<User> likes = new ArrayList<>();
+    //this only work in postgresql and not work in mysql because mysql not allow table with primary key
+//    @ManyToMany
+//    @JoinTable(
+//        name = "post_likes",
+//        joinColumns = @JoinColumn(name = "post_id"),
+//        inverseJoinColumns = @JoinColumn(name = "user_id"),
+//    )
+//    private List<User> likes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PostLike> likes = new ArrayList<>();
+
 }
