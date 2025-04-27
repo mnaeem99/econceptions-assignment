@@ -11,6 +11,7 @@ import com.econceptions.socialapp.repository.UserRepository;
 import com.econceptions.socialapp.util.JwtUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -51,7 +52,7 @@ public class UserService implements UserDetailsService {
         if (passwordEncoder.matches(requestDTO.getPassword(), user.getPassword())) {
             return jwtUtil.generateToken(user.getUsername());
         }
-        throw new RuntimeException("Invalid credentials");
+        throw new BadCredentialsException("Invalid credentials");
     }
 
     public UserResponseDTO getUser(Long id) {
